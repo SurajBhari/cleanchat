@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>CleanChat</title>
+  <link rel="stylesheet" href="popup.css"/>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
+      </svg>
+      CleanChat
+    </div>
+    <label class="master-switch" title="Enable / Disable">
+      <input type="checkbox" id="master-toggle"/>
+      <span class="track"><span class="thumb"></span></span>
+    </label>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-bar">
+    <button class="mode-btn" data-mode="streamer" id="btn-streamer">🎮 Streamer</button>
+    <button class="mode-btn" data-mode="moderator" id="btn-moderator">🛡 Moderator</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat"><span id="stat-total">—</span><label>Total</label></div>
+    <div class="stat"><span id="stat-hidden">—</span><label>Filtered</label></div>
+    <div class="stat"><span id="stat-mpm">—</span><label>Msgs/min</label></div>
+    <div class="stat"><span id="stat-users">—</span><label>Users</label></div>
+  </div>
+
+  <!-- ── STREAMER TAB ───────────────────────────────────────────────────── -->
+  <div class="tab-body" id="streamer-tab">
+    <div class="sec">
+      <div class="sec-label">Hidden Users <span class="sec-hint">Enter to add</span></div>
+      <div class="chip-field" id="users-field">
+        <input class="chip-in" id="users-in" placeholder="type name, press Enter or comma" type="text"/>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Blocked Words / Phrases</div>
+      <div class="chip-field" id="words-field">
+        <input class="chip-in" id="words-in" placeholder="type word, press Enter or comma" type="text"/>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Filters</div>
+      <label class="row"><span>Hide Commands <code>!cmd</code></span><input type="checkbox" data-path="streamer.hideCommands"/></label>
+      <label class="row"><span>Hide Duplicate Messages</span><input type="checkbox" data-path="streamer.hideDuplicates"/></label>
+      <label class="row"><span>Hide Emote-Only Messages</span><input type="checkbox" data-path="streamer.hideEmoteOnly"/></label>
+      <label class="row"><span>Hide Short Messages</span><input type="checkbox" data-path="streamer.hideShortMessages"/></label>
+      <div class="sub-slider-row">
+        <input type="range" min="1" max="50" id="minlen-slider" class="range"/>
+        <span class="range-val" id="minlen-val">2 chars</span>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Hide by Member Level <span class="sec-hint">default: show all</span></div>
+      <label class="row"><span>Hide Non-Members</span><input type="checkbox" data-path="streamer.hideNonMembers"/></label>
+      <label class="row"><span>Hide Members</span><input type="checkbox" data-path="streamer.hideMembers"/></label>
+      <label class="row"><span>Hide Moderators</span><input type="checkbox" data-path="streamer.hideModerators"/></label>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Highlights</div>
+      <label class="row"><span>First-Time Chatters ✨</span><input type="checkbox" data-path="streamer.highlightFirstTimers"/></label>
+      <label class="row"><span>Emphasize Super Chats 💰</span><input type="checkbox" data-path="streamer.emphasizeSuperChats"/></label>
+      <label class="row"><span>Highlight by Role <em>(mod/owner/member)</em></span><input type="checkbox" data-path="streamer.highlightByRole"/></label>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Speed Limit <span class="sec-hint">visible msgs/sec</span></div>
+      <div class="slider-row">
+        <input type="range" min="0" max="20" id="speed-slider" class="range"/>
+        <span class="range-val" id="speed-val">Off</span>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Keyword Highlights</div>
+      <div class="chip-field" id="kwhigh-field">
+        <input class="chip-in" id="kwhigh-in" placeholder="type keyword, press Enter or comma" type="text"/>
+      </div>
+      <div class="kwhigh-color-row">
+        <span>Highlight color</span>
+        <input type="color" id="kwhigh-color" value="#ffd700"/>
+      </div>
+    </div>
+    <div class="footer-row">
+      <button class="btn-ghost" id="reset-seen" type="button">Reset First-Timers</button>
+      <button class="btn-ghost" id="clear-all" type="button">Clear All Filters</button>
+    </div>
+    <div class="footer-row">
+      <button class="btn-ghost btn-danger" id="s-reset-defaults" type="button">Reset to Default</button>
+    </div>
+    <div class="footer-row">
+      <button class="btn-ghost" id="s-export-cfg" type="button">Export Config</button>
+      <button class="btn-ghost" id="s-import-cfg" type="button">Import Config</button>
+    </div>
+  </div>
+
+  <!-- ── MODERATOR TAB ──────────────────────────────────────────────────── -->
+  <div class="tab-body hidden" id="mod-tab">
+    <div class="sec">
+      <input class="search-input" id="search-input" placeholder="🔍 Filter messages or usernames…" type="text"/>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Detections</div>
+      <label class="row"><span>Highlight Links 🔗</span><input type="checkbox" data-path="moderator.highlightLinks"/></label>
+      <label class="row"><span>Caps Spam Detection 🔊</span><input type="checkbox" data-path="moderator.detectCapsSpam"/></label>
+      <label class="row"><span>Emoji Spam Detection 🤡</span><input type="checkbox" data-path="moderator.detectEmojiSpam"/></label>
+      <label class="row"><span>New Viewer Alert 🎉</span><input type="checkbox" data-path="moderator.showNewViewerAlert"/></label>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Caps Threshold</div>
+      <div class="slider-row">
+        <input type="range" min="50" max="100" id="caps-slider" class="range"/>
+        <span class="range-val" id="caps-val">70%</span>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Alert Keywords</div>
+      <div class="chip-field" id="alerts-field">
+        <input class="chip-in" id="alerts-in" placeholder="type word, press Enter or comma" type="text"/>
+      </div>
+      <label class="row" style="margin-top:6px">
+        <span>Whole Word Only <em>(won't match inside longer words)</em></span>
+        <input type="checkbox" data-path="moderator.alertWholeWord"/>
+      </label>
+      <label class="row">
+        <span>Alert Sound 🔔</span>
+        <input type="checkbox" data-path="moderator.alertSound"/>
+      </label>
+    </div>
+    <div class="sec">
+      <div class="sec-label">Moderation Tools</div>
+      <label class="row"><span>User Info Tooltip on Hover</span><input type="checkbox" data-path="moderator.showUserTooltip"/></label>
+      <label class="row"><span>User History on Click 📋</span><input type="checkbox" data-path="moderator.showUserHistory"/></label>
+    </div>
+    <div class="footer-row">
+      <button class="btn-primary" id="export-log" type="button">📥 Export Chat Log</button>
+    </div>
+    <div class="footer-row">
+      <button class="btn-ghost" id="m-clear-all" type="button">Clear All Filters</button>
+      <button class="btn-ghost btn-danger" id="m-reset-defaults" type="button">Reset to Default</button>
+    </div>
+    <div class="footer-row">
+      <button class="btn-ghost" id="m-export-cfg" type="button">Export Config</button>
+      <button class="btn-ghost" id="m-import-cfg" type="button">Import Config</button>
+    </div>
+  </div>
+
+  <!-- ── IMPORT MODAL ───────────────────────────────────────────────────── -->
+  <div class="import-overlay hidden" id="import-modal">
+    <div class="import-box">
+      <div class="import-head">
+        <span>Import CleanChat Config</span>
+        <button id="import-close" type="button">✕</button>
+      </div>
+      <div class="import-warn">
+        <span class="warn-icon">⚠</span>
+        Importing will <strong>overwrite</strong> your existing settings for the selected tabs.
+      </div>
+      <div class="import-body">
+        <div class="import-qlabel">What to import?</div>
+        <label class="import-opt" id="import-opt-s">
+          <input type="radio" name="import-sel" value="streamer"/>
+          <span>Streamer settings only</span>
+        </label>
+        <label class="import-opt" id="import-opt-m">
+          <input type="radio" name="import-sel" value="moderator"/>
+          <span>Moderator settings only</span>
+        </label>
+        <label class="import-opt">
+          <input type="radio" name="import-sel" value="both" checked/>
+          <span>Both</span>
+        </label>
+      </div>
+      <div class="import-footer">
+        <button class="btn-ghost" id="import-cancel" type="button">Cancel</button>
+        <button class="btn-confirm" id="import-apply" type="button">Import &amp; Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Open YouTube to activate</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

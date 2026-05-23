@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "CleanChat — YouTube Live Chat Filter",
+  "short_name": "CleanChat",
+  "version": "1.0.0",
+  "description": "Advanced YouTube live chat filter with Streamer and Moderator modes. Hide bots, highlight first-timers, detect spam, export logs, and more.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CleanChat"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.youtube.com/live_chat*",
+        "*://www.youtube.com/watch*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "permissions": ["storage"],
+  "host_permissions": [
+    "*://www.youtube.com/*"
+  ]
+}
