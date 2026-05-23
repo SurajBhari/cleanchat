@@ -17,7 +17,7 @@
       commandPrefixes: ['!'],
       highlightFirstTimers: true,
       hideDuplicates: true,
-      duplicateWindowSec: 30,
+      duplicateGap: 0,
       keywordHighlights: [],
       keywordHighlightColor: '#ffd700',
       speedLimit: 0,
@@ -51,6 +51,7 @@
   let cfg = deepClone(DEFAULTS);
   let seenUsers = new Set();
   let recentMsgs = new Map();
+  let msgCount = 0;
   let userHistory = new Map();
   let sessionLog = [];
   let speedWindow = [];
@@ -161,7 +162,7 @@
     // Strip :shortcode: emotes (e.g. :slightly_smiling_face:) and Unicode emoji chars.
     // If nothing real remains, the message is emote-only.
     const stripped = rawText
-      .replace(/:[a-zA-Z0-9_]+:/g, '')
+      .replace(/:[^\s:]+:/g, '')
       .replace(/\p{Emoji}/gu, '')
       .trim();
     return stripped.length === 0;
@@ -182,12 +183,24 @@
   // ─── DUPLICATE DETECTION ─────────────────────────────────────────────────────
   function isDupe(text, authorId) {
     const key = `${authorId}:${text}`;
-    const now = Date.now();
-    const win = (cfg.streamer.duplicateWindowSec || 30) * 1000;
-    if (recentMsgs.has(key) && now - recentMsgs.get(key) < win) { recentMsgs.set(key, now); return true; }
-    recentMsgs.set(key, now);
-    if (recentMsgs.size > 1000)
-      for (const [k, t] of recentMsgs) if (now - t > win * 2) recentMsgs.delete(k);
+    const gap = cfg.streamer.duplicateGap ?? 0;
+    if (recentMsgs.has(key)) {
+      const last = recentMsgs.get(key);
+      const isDuplicate = gap === 0 || (msgCount - last - 1) < gap;
+      recentMsgs.set(key, msgCount);
+      if (isDuplicate) return true;
+    } else {
+      recentMsgs.set(key, msgCount);
+    }
+    if (recentMsgs.size > 2000) {
+      const cutoff = gap > 0 ? msgCount - gap * 3 : -1;
+      for (const [k, c] of recentMsgs) if (cutoff > 0 && c < cutoff) recentMsgs.delete(k);
+      if (recentMsgs.size > 2000) {
+        const sorted = [...recentMsgs.entries()].sort((a, b) => b[1] - a[1]);
+        recentMsgs.clear();
+        sorted.slice(0, 1000).forEach(([k, v]) => recentMsgs.set(k, v));
+      }
+    }
     return false;
   }
 
@@ -384,7 +397,7 @@
     if (el.querySelector(`.${NS}-badge`)) return;
     const badge = document.createElement('span');
     badge.className = `${NS}-badge ${NS}-badge-new`;
-    badge.textContent = '🎉 New viewer';
+    badge.textContent = '🎉 First message';
     el.querySelector('#header-content, #content')?.prepend(badge);
   }
 
@@ -531,6 +544,7 @@
   function processMsg(el) {
     if (!el || el.dataset.ccDone) return;
     el.dataset.ccDone = '1';
+    msgCount++;
     const author = getAuthorName(el);
     const text = getMsgText(el);
     if (author && text) {
@@ -547,6 +561,7 @@
   function reprocessAll() {
     isReprocessing = true;
     recentMsgs.clear();
+    msgCount = 0;
     const msgs = document.querySelectorAll(
       'yt-live-chat-text-message-renderer,yt-live-chat-paid-message-renderer,' +
       'yt-live-chat-membership-item-renderer,yt-live-chat-paid-sticker-renderer'

@@ -53,6 +53,10 @@
       <div class="sec-label">Filters</div>
       <label class="row"><span>Hide Commands <code>!cmd</code></span><input type="checkbox" data-path="streamer.hideCommands"/></label>
       <label class="row"><span>Hide Duplicate Messages</span><input type="checkbox" data-path="streamer.hideDuplicates"/></label>
+      <div class="sub-slider-row">
+        <input type="range" min="0" max="50" id="dup-gap-slider" class="range"/>
+        <span class="range-val" id="dup-gap-val">Never</span>
+      </div>
       <label class="row"><span>Hide Emote-Only Messages</span><input type="checkbox" data-path="streamer.hideEmoteOnly"/></label>
       <label class="row"><span>Hide Short Messages</span><input type="checkbox" data-path="streamer.hideShortMessages"/></label>
       <div class="sub-slider-row">
@@ -112,7 +116,7 @@
       <label class="row"><span>Highlight Links 🔗</span><input type="checkbox" data-path="moderator.highlightLinks"/></label>
       <label class="row"><span>Caps Spam Detection 🔊</span><input type="checkbox" data-path="moderator.detectCapsSpam"/></label>
       <label class="row"><span>Emoji Spam Detection 🤡</span><input type="checkbox" data-path="moderator.detectEmojiSpam"/></label>
-      <label class="row"><span>New Viewer Alert 🎉</span><input type="checkbox" data-path="moderator.showNewViewerAlert"/></label>
+      <label class="row"><span>First Message Alert 🎉</span><input type="checkbox" data-path="moderator.showNewViewerAlert"/></label>
     </div>
     <div class="sec">
       <div class="sec-label">Caps Threshold</div>

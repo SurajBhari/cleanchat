@@ -1,0 +1,4 @@
+.claude/
+store_screenshots/
+*.zip
+make_store_screenshots.py

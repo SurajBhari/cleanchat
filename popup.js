@@ -9,7 +9,7 @@ const DEFAULTS = {
     commandPrefixes: ['!'],
     highlightFirstTimers: true,
     hideDuplicates: true,
-    duplicateWindowSec: 30,
+    duplicateGap: 0,
     keywordHighlights: [],
     keywordHighlightColor: '#ffd700',
     speedLimit: 0,
@@ -143,6 +143,8 @@ function renderAll() {
   const s = cfg.streamer;
   const speedSlider = document.getElementById('speed-slider');
   if (speedSlider) { speedSlider.value = s.speedLimit || 0; document.getElementById('speed-val').textContent = s.speedLimit ? s.speedLimit + '/s' : 'Off'; }
+  const dupGapSlider = document.getElementById('dup-gap-slider');
+  if (dupGapSlider) { const g = s.duplicateGap ?? 0; dupGapSlider.value = g; document.getElementById('dup-gap-val').textContent = g === 0 ? 'Never' : `After ${g} msgs`; }
   const minlenSlider = document.getElementById('minlen-slider');
   if (minlenSlider) { minlenSlider.value = s.minLength || 2; document.getElementById('minlen-val').textContent = (s.minLength || 2) + ' chars'; }
   renderChips('users-field',  s.hiddenUsers       || [], 'user');
@@ -290,6 +292,12 @@ function bindAll() {
     const v = parseInt(document.getElementById('speed-slider').value);
     cfg.streamer.speedLimit = v;
     document.getElementById('speed-val').textContent = v ? v + '/s' : 'Off';
+    save();
+  };
+  document.getElementById('dup-gap-slider').oninput = () => {
+    const v = parseInt(document.getElementById('dup-gap-slider').value);
+    cfg.streamer.duplicateGap = v;
+    document.getElementById('dup-gap-val').textContent = v === 0 ? 'Never' : `After ${v} msgs`;
     save();
   };
   document.getElementById('minlen-slider').oninput = () => {
