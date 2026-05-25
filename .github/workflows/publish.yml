@@ -1,0 +1,60 @@
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare extension files
+        run: |
+          mkdir -p dist/icons
+          cp manifest.json popup.html popup.js popup.css content.js content.css background.js dist/
+          cp icons/icon*.png dist/icons/
+
+      - name: Build zip
+        run: cd dist && zip -r ../cleanchat.zip . && cd ..
+
+      # ── Chrome Web Store ──────────────────────────────────────────────────
+      # Secrets required (Settings → Secrets → Actions):
+      #   CHROME_EXTENSION_ID   — the extension's ID from the Chrome dashboard
+      #   CHROME_CLIENT_ID      — OAuth2 client ID from Google Cloud Console
+      #   CHROME_CLIENT_SECRET  — OAuth2 client secret
+      #   CHROME_REFRESH_TOKEN  — generated via https://github.com/nicedoc/openwith#get-refresh-token
+      - name: Publish to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@v4.0.1
+        with:
+          file-path: cleanchat.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      # ── Firefox Add-ons ───────────────────────────────────────────────────
+      # Secrets required:
+      #   FIREFOX_API_KEY     — JWT issuer from https://addons.mozilla.org/developers/addon/api/key/
+      #   FIREFOX_API_SECRET  — JWT secret from the same page
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install web-ext
+        run: npm install -g web-ext
+
+      - name: Publish to Firefox Add-ons
+        run: |
+          web-ext sign \
+            --source-dir ./dist \
+            --artifacts-dir ./web-ext-artifacts \
+            --api-key "${{ secrets.FIREFOX_API_KEY }}" \
+            --api-secret "${{ secrets.FIREFOX_API_SECRET }}" \
+            --channel listed

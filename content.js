@@ -1,7 +1,8 @@
 (function () {
   'use strict';
 
-  if (!window.location.href.includes('live_chat')) return;
+  const _href = window.location.href;
+  if (!_href.includes('live_chat') && !/studio\.youtube\.com\/video\/[^/]+\/livestreaming/.test(_href)) return;
   if (window.__ccLoaded) return;
   window.__ccLoaded = true;
 
@@ -41,8 +42,6 @@
       keywordAlerts: [],
       alertSound: false,
       alertWholeWord: false,
-      showUserTooltip: true,
-      showUserHistory: true,
       searchFilter: '',
     },
   };
@@ -52,7 +51,6 @@
   let seenUsers = new Set();
   let recentMsgs = new Map();
   let msgCount = 0;
-  let userHistory = new Map();
   let sessionLog = [];
   let speedWindow = [];
   let stats = { total: 0, hidden: 0, recentWindow: [], users: new Set() };
@@ -381,7 +379,6 @@
         applyAlertHighlights(el, m.keywordAlerts, m.alertWholeWord);
       }
       addQuickActions(el);
-      if (m.showUserTooltip) addTooltipTrigger(el);
     }
   }
 
@@ -406,9 +403,14 @@
     if (el.querySelector(`.${NS}-actions`)) return;
     const div = document.createElement('div');
     div.className = `${NS}-actions`;
-    div.innerHTML = [['⏱','timeout','Timeout'],['🚫','ban','Ban'],['🗑','delete','Delete'],['📋','history','History']]
-      .map(([icon, action, title]) => `<button class="${NS}-act-btn" data-action="${action}" title="${title}">${icon}</button>`)
-      .join('');
+    for (const [icon, action, title] of [['⏱','timeout','Timeout'],['🚫','ban','Ban'],['🗑','delete','Delete']]) {
+      const btn = document.createElement('button');
+      btn.className = `${NS}-act-btn`;
+      btn.dataset.action = action;
+      btn.title = title;
+      btn.textContent = icon;
+      div.appendChild(btn);
+    }
     div.addEventListener('click', (e) => {
       e.stopPropagation();
       const btn = e.target.closest('[data-action]');
@@ -418,76 +420,8 @@
   }
 
   function handleAction(action, author, el) {
-    if (action === 'history') showHistory(author);
-    else if (action === 'delete') el.classList.add(`${NS}-deleted`);
+    if (action === 'delete') el.classList.add(`${NS}-deleted`);
     else toast(`${action === 'timeout' ? '⏱' : '🚫'} To ${action} @${author}: click their name in chat`, 'info');
-  }
-
-  // ─── USER TOOLTIP ────────────────────────────────────────────────────────────
-  function addTooltipTrigger(el) {
-    const authorEl = el.querySelector('#author-name');
-    if (!authorEl || authorEl.dataset.ccTip) return;
-    authorEl.dataset.ccTip = '1';
-    authorEl.addEventListener('mouseenter', (e) => showTooltip(e, getAuthorName(el)));
-    authorEl.addEventListener('mouseleave', hideTooltip);
-  }
-
-  function showTooltip(e, name) {
-    hideTooltip();
-    const msgs = userHistory.get(name) || [];
-    const tip = document.createElement('div');
-    tip.id = `${NS}-tooltip`;
-    tip.innerHTML = `
-      <div class="${NS}-tip-name">@${escHtml(name)}</div>
-      <div class="${NS}-tip-row"><span>Session messages</span><strong>${msgs.length}</strong></div>
-      ${msgs[0] ? `<div class="${NS}-tip-row"><span>First seen</span><strong>${fmtTime(msgs[0].time)}</strong></div>` : ''}
-      ${msgs.at(-1) ? `<div class="${NS}-tip-row"><span>Last message</span><strong>${fmtTime(msgs.at(-1).time)}</strong></div>` : ''}`;
-    document.body.appendChild(tip);
-    requestAnimationFrame(() => {
-      const r = e.target.getBoundingClientRect();
-      tip.style.left = Math.max(4, Math.min(r.left, window.innerWidth - tip.offsetWidth - 8)) + 'px';
-      tip.style.top = (r.bottom + 4) + 'px';
-      tip.classList.add('visible');
-    });
-  }
-
-  function hideTooltip() { document.getElementById(`${NS}-tooltip`)?.remove(); }
-
-  // ─── USER HISTORY ────────────────────────────────────────────────────────────
-  function trackHistory(el) {
-    const name = getAuthorName(el);
-    const text = getMsgText(el);
-    if (!name || !text) return;
-    const arr = userHistory.get(name) || [];
-    arr.push({ text, time: Date.now() });
-    if (arr.length > 60) arr.shift();
-    userHistory.set(name, arr);
-  }
-
-  function showHistory(name) {
-    document.querySelector(`.${NS}-modal`)?.remove();
-    const msgs = userHistory.get(name) || [];
-    const modal = document.createElement('div');
-    modal.className = `${NS}-modal`;
-    modal.innerHTML = `
-      <div class="${NS}-modal-inner">
-        <div class="${NS}-modal-head">
-          <span>@${escHtml(name)} — ${msgs.length} message${msgs.length !== 1 ? 's' : ''} this session</span>
-          <button class="${NS}-modal-close">✕</button>
-        </div>
-        <div class="${NS}-modal-body">
-          ${msgs.length === 0
-            ? `<div class="${NS}-empty-state">No messages tracked yet</div>`
-            : [...msgs].reverse().map((m) => `
-                <div class="${NS}-hist-row">
-                  <span class="${NS}-hist-time">${fmtTime(m.time)}</span>
-                  <span class="${NS}-hist-text">${escHtml(m.text)}</span>
-                </div>`).join('')}
-        </div>
-      </div>`;
-    modal.querySelector(`.${NS}-modal-close`).onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    document.body.appendChild(modal);
   }
 
   // ─── STATS ───────────────────────────────────────────────────────────────────
@@ -534,7 +468,9 @@
   function toast(msg, type = 'info') {
     const n = document.createElement('div');
     n.className = `${NS}-toast ${NS}-toast-${type}`;
-    n.innerHTML = `<span>${escHtml(msg)}</span>`;
+    const span = document.createElement('span');
+    span.textContent = msg;
+    n.appendChild(span);
     document.body.appendChild(n);
     requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('show')));
     setTimeout(() => { n.classList.remove('show'); setTimeout(() => n.remove(), 400); }, 3500);
@@ -551,7 +487,6 @@
       sessionLog.push({ author, text, time: Date.now() });
       if (sessionLog.length > 5000) sessionLog.shift();
     }
-    if (cfg.mode === 'moderator') trackHistory(el);
     const hidden = shouldHide(el);
     trackStats(el, hidden);
     if (hidden) el.classList.add(`${NS}-hidden`);
@@ -584,18 +519,40 @@
     const bar = document.createElement('div');
     bar.id = `${NS}-bar`;
     bar.dataset.mode = cfg.mode;
-    bar.innerHTML = `
-      <svg class="${NS}-bar-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-        <line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
-      </svg>
-      <div class="${NS}-bar-seg">
-        <button class="${NS}-bar-btn${isStr ? ' active' : ''}" data-mode="streamer">Streamer</button>
-        <button class="${NS}-bar-btn${!isStr ? ' active' : ''}" data-mode="moderator">Mod</button>
-      </div>
-      <label class="${NS}-bar-enable" title="${cfg.enabled ? 'Disable' : 'Enable'} CleanChat">
-        <input type="checkbox" id="${NS}-bar-power" ${cfg.enabled ? 'checked' : ''}/>
-        <span class="${NS}-bar-check"></span>
-      </label>`;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', `${NS}-bar-icon`);
+    svg.setAttribute('width', '13'); svg.setAttribute('height', '13');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '2.5');
+    svg.setAttribute('stroke-linecap', 'round');
+    for (const [x1,y1,x2,y2] of [[3,6,21,6],[6,12,18,12],[10,18,14,18]]) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+      svg.appendChild(line);
+    }
+    bar.appendChild(svg);
+
+    const seg = document.createElement('div');
+    seg.className = `${NS}-bar-seg`;
+    for (const [mode, label] of [['streamer','Streamer'],['moderator','Mod']]) {
+      const btn = document.createElement('button');
+      btn.className = `${NS}-bar-btn${cfg.mode === mode ? ' active' : ''}`;
+      btn.dataset.mode = mode;
+      btn.textContent = label;
+      seg.appendChild(btn);
+    }
+    bar.appendChild(seg);
+
+    const lbl = document.createElement('label');
+    lbl.className = `${NS}-bar-enable`;
+    lbl.title = `${cfg.enabled ? 'Disable' : 'Enable'} CleanChat`;
+    const chk = document.createElement('input');
+    chk.type = 'checkbox'; chk.id = `${NS}-bar-power`; chk.checked = cfg.enabled;
+    const chkSpan = document.createElement('span');
+    chkSpan.className = `${NS}-bar-check`;
+    lbl.appendChild(chk); lbl.appendChild(chkSpan);
+    bar.appendChild(lbl);
 
     const itemList = document.querySelector('#item-list');
     if (itemList?.parentNode) itemList.parentNode.insertBefore(bar, itemList);

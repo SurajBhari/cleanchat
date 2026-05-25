@@ -33,8 +33,6 @@ const DEFAULTS = {
     keywordAlerts: [],
     alertSound: false,
     alertWholeWord: false,
-    showUserTooltip: true,
-    showUserHistory: true,
     searchFilter: '',
   },
 };
