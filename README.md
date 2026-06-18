@@ -1,5 +1,11 @@
 # CleanChat — YouTube Live Chat Filter
 
+![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-MV3-4285F4?style=flat&logo=googlechrome&logoColor=white)
+![Firefox](https://img.shields.io/badge/Firefox-FF7139?style=flat&logo=firefoxbrowser&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white)
+![No Backend](https://img.shields.io/badge/Privacy-100%25_local-success?style=flat)
+
 A browser extension (Manifest V3) that makes fast-moving YouTube live chat **readable and moderatable**. It runs in two modes with different goals:
 
 - **🎮 Streamer mode** — cut the noise so you (and your overlay) only see chat that matters.
