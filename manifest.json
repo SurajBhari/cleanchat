@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "CleanChat — YouTube Live Chat Filter",
   "short_name": "CleanChat",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "YouTube live chat filter with Streamer and Moderator modes. Hide bots, highlight first-timers, detect spam, export logs, and more.",
   "icons": {
     "16": "icons/icon16.png",
