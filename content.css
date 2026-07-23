@@ -114,12 +114,19 @@
 yt-live-chat-text-message-renderer.cc-hidden,
 yt-live-chat-paid-message-renderer.cc-hidden,
 yt-live-chat-membership-item-renderer.cc-hidden,
-yt-live-chat-paid-sticker-renderer.cc-hidden {
+yt-live-chat-paid-sticker-renderer.cc-hidden,
+yt-gift-message-view-model.cc-hidden {
   display: none !important;
   height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
+}
+
+yt-gift-message-view-model.cc-gift {
+  background: linear-gradient(90deg, rgba(255,64,129,0.14) 0%, transparent 80%) !important;
+  border-left: 2px solid #ff4081 !important;
+  padding-left: 6px !important;
 }
 
 yt-live-chat-text-message-renderer.cc-role-viewer {

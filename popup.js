@@ -22,6 +22,8 @@ const DEFAULTS = {
     hideNonMembers: false,
     hideMembers: false,
     hideModerators: false,
+    hideGifts: false,
+    highlightGifts: false,
   },
   moderator: {
     highlightLinks: true,
@@ -335,7 +337,8 @@ function bindAll() {
     cfg.streamer.blockedWords = [];
     cfg.streamer.hideCommands = cfg.streamer.hideDuplicates = cfg.streamer.hideEmoteOnly =
       cfg.streamer.hideShortMessages =
-      cfg.streamer.hideNonMembers = cfg.streamer.hideMembers = cfg.streamer.hideModerators = false;
+      cfg.streamer.hideNonMembers = cfg.streamer.hideMembers = cfg.streamer.hideModerators =
+      cfg.streamer.hideGifts = false;
     save(); renderAll();
   }));
 

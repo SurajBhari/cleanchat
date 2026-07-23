@@ -31,6 +31,8 @@
       hideNonMembers: false,
       hideMembers: false,
       hideModerators: false,
+      hideGifts: false,
+      highlightGifts: false,
     },
     moderator: {
       highlightLinks: true,
@@ -115,7 +117,7 @@
 
   // ─── DOM HELPERS ─────────────────────────────────────────────────────────────
   function getAuthorName(el) {
-    return (el.querySelector('#author-name')?.textContent || '').trim();
+    return (el.querySelector('#author-name, #author-name-v2')?.textContent || '').trim();
   }
 
   function getAuthorId(el) {
@@ -130,11 +132,12 @@
   }
 
   function getMsgText(el) {
-    return (el.querySelector('#message')?.textContent || '').trim();
+    return (el.querySelector('#message, #message-v2')?.textContent || '').trim();
   }
 
   function getMsgType(el) {
     const tag = el.tagName.toLowerCase();
+    if (tag.includes('gift')) return 'gift';
     if (tag.includes('paid-message') || tag.includes('paid_message')) return 'superchat';
     if (tag.includes('membership') || tag.includes('member')) return 'membership';
     if (tag.includes('sticker')) return 'sticker';
@@ -235,6 +238,7 @@
 
     if (cfg.mode === 'streamer') {
       const s = cfg.streamer;
+      if (type === 'gift') return !!s.hideGifts;
       for (const u of s.hiddenUsers || [])
         if (u && author.includes(u.toLowerCase().replace('@', ''))) return true;
       if (s.hideCommands)
@@ -337,6 +341,10 @@
 
     if (cfg.mode === 'streamer') {
       const s = cfg.streamer;
+      if (type === 'gift') {
+        if (s.highlightGifts) el.classList.add(`${NS}-gift`);
+        return;
+      }
       if (s.highlightFirstTimers && (hasBadge(el, 'first') || checkAndMarkFirstTimer(authorId))) {
         el.classList.add(`${NS}-firsttimer`);
         addFirstTimerBadge(el);
@@ -476,9 +484,21 @@
     setTimeout(() => { n.classList.remove('show'); setTimeout(() => n.remove(), 400); }, 3500);
   }
 
+  // ─── CLEANUP ─────────────────────────────────────────────────────────────────
+  // Strip every trace CleanChat left on a message so it renders as raw YouTube.
+  function clearCc(el) {
+    for (const cls of [...el.classList]) if (cls.startsWith(NS + '-')) el.classList.remove(cls);
+    el.querySelector(`.${NS}-actions`)?.remove();
+    el.querySelector(`.${NS}-badge`)?.remove();
+    el.querySelectorAll(`mark.${NS}-kw-mark, mark.${NS}-alert-mark`).forEach((mk) => {
+      mk.replaceWith(document.createTextNode(mk.textContent));
+    });
+  }
+
   // ─── PROCESS MESSAGE ─────────────────────────────────────────────────────────
   function processMsg(el) {
     if (!el || el.dataset.ccDone) return;
+    if (!cfg.enabled) { clearCc(el); delete el.dataset.ccDone; return; }
     el.dataset.ccDone = '1';
     msgCount++;
     const author = getAuthorName(el);
@@ -497,15 +517,10 @@
     isReprocessing = true;
     recentMsgs.clear();
     msgCount = 0;
-    const msgs = document.querySelectorAll(
-      'yt-live-chat-text-message-renderer,yt-live-chat-paid-message-renderer,' +
-      'yt-live-chat-membership-item-renderer,yt-live-chat-paid-sticker-renderer'
-    );
+    const msgs = document.querySelectorAll(MSG_SELS);
     for (const el of msgs) {
       delete el.dataset.ccDone;
-      for (const cls of [...el.classList]) if (cls.startsWith(NS + '-')) el.classList.remove(cls);
-      el.querySelector(`.${NS}-actions`)?.remove();
-      el.querySelector(`.${NS}-badge`)?.remove();
+      clearCc(el);
       processMsg(el);
     }
     isReprocessing = false;
@@ -585,7 +600,8 @@
   // ─── OBSERVER ────────────────────────────────────────────────────────────────
   const MSG_SELS =
     'yt-live-chat-text-message-renderer,yt-live-chat-paid-message-renderer,' +
-    'yt-live-chat-membership-item-renderer,yt-live-chat-paid-sticker-renderer';
+    'yt-live-chat-membership-item-renderer,yt-live-chat-paid-sticker-renderer,' +
+    'yt-gift-message-view-model';
 
   function startObserver() {
     new MutationObserver((muts) => {
